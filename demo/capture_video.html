@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Access-Control-Allow-Origin" content="*" />
+    <link rel="stylesheet" href="">
+    <style type="text/css">
+        .screen_shot_btn,.screen_save_btn{display: inline-block;width: 72px;height: 36px;text-align: center;line-height: 36px;text-decoration: none;background: #4473C2;border: none;border-radius: 8px;margin:0 5px;color:#fff;outline: none;}
+        .btn-wrap{margin:15px 0;}
+        .img_show_wrap{width: 720px;height: 450px;margin:15px 0;position:relative;}
+        #image_el,#V2I_canvas{position:absolute;width: 720px;height: 450px;top:0;left:0;}
+    </style>
+    <script src="https://code.jquery.com/jquery-1.11.3.min.js" type="text/javascript"></script>
+    <script src="http://example.com/static/flv.js"></script>
+</head>
+
+<div class="btn-wrap">
+    <a id="screen_shot_btn"  class="screen_shot_btn" href="javascript:">截图</a>
+    <a id="screen_save_btn" class="screen_save_btn" href="javascript:">下载</a>
+</div>
+<div class="video_wrap">
+    <video id="videoElement"  ></video>
+</div>
+
+<div class="img_show_wrap">
+    <canvas width="720" height="450" id="V2I_canvas" ></canvas>
+    <img id="image_el" src="" alt="">
+</div>
+
+
+
+<script>
+    function drawCanvas(canvas, img) {
+      canvas.width = getComputedStyle(canvas).width.split('px')[0];
+      canvas.height = getComputedStyle(canvas).height.split('px')[0];
+      let ratio  = Math.min(canvas.width / img.width, canvas.height / img.height);
+      let x = (canvas.width - img.width * ratio) / 2;
+      let y = (canvas.height - img.height * ratio) / 2;
+      canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+      canvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height,
+          x, y, img.width * ratio, img.height * ratio);
+    }
+
+
+    $(function() {
+		// console.log("DOM fully loaded and parsed");
+		if (flvjs.isSupported()) {
+			var videoElement = document.getElementById('videoElement');
+			console.log(videoElement);
+			var flvPlayer = flvjs.createPlayer({
+				type: 'flv',
+				url: ' http://example.com/test.flv'
+			});
+			flvPlayer.attachMediaElement(videoElement);
+			flvPlayer.load();
+			flvPlayer.play();
+
+			var mySrc = "";
+
+
+            function htmlToImage() {
+                var video = document.getElementById("videoElement");
+                var stream = video.captureStream();
+                const track  = stream.getVideoTracks()[0];
+                var imageCapture = new ImageCapture(track);
+                imageCapture.grabFrame().then(imageBitmap => { const canvas = document.querySelector('#V2I_canvas');drawCanvas(canvas, imageBitmap);}).catch(error => console.log(error));
+                mySrc = canvas.toDataURL("image/png");
+            }
+            $("#screen_shot_btn").click(function(event) {
+                htmlToImage();
+                $("#image_el").attr("src", mySrc);
+            });
+
+            $("#screen_save_btn").click(function() {
+                htmlToImage();
+                if ($("#image_el").attr("src") != "") {
+                    downloadFile(mySrc);
+                } else {
+                    alert("内容为空");
+                }
+            });
+
+            function downloadFile(src) {
+                var triggerDownload = $("#screen_save_btn").attr("href", src).attr("download", "jietu.png");
+            }
+		}
+
+    });
+</script>
+</html>
